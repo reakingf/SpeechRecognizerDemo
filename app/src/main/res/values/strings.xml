@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">SpeechRecognizerDemo</string>
+    <string name="start">start</string>
+    <string name="change_language">setting</string>
+    <string name="wait">请稍等</string>
+    <string name="speak_please">请说话</string>
+    <string name="listening">倾听中</string>
+    <string name="recognizing">正在识别</string>
+    <string name="recognize_finish">说完了</string>
+    <string name="onError">出错代码为： </string>
+</resources>
