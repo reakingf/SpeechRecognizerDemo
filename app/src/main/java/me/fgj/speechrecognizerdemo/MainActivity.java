@@ -1,24 +1,25 @@
 package me.fgj.speechrecognizerdemo;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baidu.speech.VoiceRecognitionService;
 
@@ -30,9 +31,12 @@ import java.util.List;
  * 运用Android提供的识别器结合百度提供的语音识别服务定制自己的语音识别功能，
  * 可以实现自己的事件处理逻辑，减少第三方对事件处理的限制
  */
-public class MainActivity extends Activity {
-    TextView resultText;//用于显示识别结果
+public class MainActivity extends Activity implements View.OnClickListener {
+    ListView listView;
+    private List<String> resultList;
+    private ArrayAdapter<String> adapter;
     Button startButton;//启动识别按钮
+    Button settingButton;//设置语音类型
     private SpeechRecognizer speechRecognizer;//识别器
     private MyDialog myDialog;//自定义对话框
     private TextView dialogTip;//对话框中的语音状态提示
@@ -43,6 +47,7 @@ public class MainActivity extends Activity {
     Intent recognizerIntent;//用于设置语音识别器
     private boolean isRecognizing = false;
     private static final int DELAY_TIME = 200;//音量调用延迟时间
+    private AlertDialog.Builder builder;
 
     /**
      * 将语音识别器的活动与对话框事件关联起来
@@ -86,8 +91,12 @@ public class MainActivity extends Activity {
         initView();
     }
     private void initView() {
-        resultText = (TextView) findViewById(R.id.result);
+        listView = (ListView) findViewById(R.id.results);
+        resultList = new ArrayList<>();
+        adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, resultList);
+        listView.setAdapter(adapter);
         startButton = (Button) findViewById(R.id.start);
+        settingButton = (Button) findViewById(R.id.setting);
         myDialog = new MyDialog(this, R.style.Theme_RecognitionDialog);
         LayoutInflater inflater = LayoutInflater.from(this);
         View view = inflater.inflate(R.layout.recognizer_dialog, null);
@@ -95,24 +104,51 @@ public class MainActivity extends Activity {
         dialogTip = (TextView) myDialog.findViewById(R.id.speak_tips);
         dialogVolume = (ImageView) myDialog.findViewById(R.id.volume);
         finishButton = (Button) myDialog.findViewById(R.id.speak_finish);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        startButton.setOnClickListener(this);
+        settingButton.setOnClickListener(this);
+        finishButton.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.start:
                 myDialog.show();
-            }
-        });
-        finishButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+                break;
+            case R.id.setting:
+                setLanguage();
+                break;
+            case R.id.speak_finish:
                 speechRecognizer.stopListening();
                 finishButton.setBackgroundResource(R.drawable.bg_dialog_bt_selected);
-            }
-        });
+                break;
+        }
     }
 
     //启动语音识别
     private void recognizerStart() {
+        recognizerIntent.putExtra("language", config.getCurrentLanguage());
         speechRecognizer.startListening(recognizerIntent);
+    }
+
+    public void setLanguage() {
+        builder = new AlertDialog.Builder(this);
+        builder.setTitle("设置语音输入类型");
+        final String[] languageTypes = {"普通话(中国)", "English(United State)", "粤语（广东话）", "四川话"};
+        builder.setItems(languageTypes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                config.setCurrentLanguage(which);
+                Toast.makeText(getApplicationContext(), "当前语言为" +
+                        languageTypes[which], Toast.LENGTH_LONG).show();
+            }
+        });
+        builder.setNegativeButton("关闭", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        });
+        builder.show();
     }
 
     //语音转文本后的回调接口
@@ -120,7 +156,6 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RESULT_OK) {
-            Log.d("onActivityResult","-------------------------------------------------");
             mRecognitionListener.onResults(data.getExtras());
         }
     }
@@ -129,13 +164,11 @@ public class MainActivity extends Activity {
     RecognitionListener mRecognitionListener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle params) {
-            Log.d("onReadyForSpeech","-------------------------------------------------");
             dialogTip.setText(R.string.speak_please);
         }
 
         @Override
         public void onBeginningOfSpeech() {
-            Log.d("onBeginningOfSpeech","-------------------------------------------------");
             dialogTip.setText(R.string.listening);
             isRecognizing = true;
             dialogHandler.removeCallbacks(dialogVolumeRunnable);
@@ -153,7 +186,6 @@ public class MainActivity extends Activity {
 
         @Override
         public void onEndOfSpeech() {
-            Log.d("onEndOfSpeech","-------------------------------------------------");
             isRecognizing = false;
             dialogHandler.removeCallbacks(dialogVolumeRunnable);
             dialogHandler.postDelayed(dialogVolumeRunnable, DELAY_TIME);
@@ -162,7 +194,6 @@ public class MainActivity extends Activity {
         //当识别出现错误时，如识别不到声音，网络不好等
         @Override
         public void onError(int error) {
-            Log.d("onError","-------------------------------------------------");
             dialogHandler.removeCallbacks(dialogVolumeRunnable);
             dialogHandler.postDelayed(dialogVolumeRunnable, DELAY_TIME);
             if (myDialog != null && myDialog.isShowing()) {
@@ -172,11 +203,11 @@ public class MainActivity extends Activity {
 
         @Override
         public void onResults(Bundle results) {
-            Log.d("onResults","-------------------------------------------------");
             ArrayList<String> rs = results != null ? results.getStringArrayList(SpeechRecognizer.
                     RESULTS_RECOGNITION) : null;
             if (rs != null && rs.size() > 0) {
-                resultText.setText(rs.get(0));
+                resultList.add(0, rs.get(0));
+                adapter.notifyDataSetChanged();
             }
             if (myDialog.isShowing()) {
                 myDialog.dismiss();
@@ -185,7 +216,6 @@ public class MainActivity extends Activity {
 
         @Override
         public void onPartialResults(Bundle partialResults) {
-            Log.d("onPartialResults","-------------------------------------------------");
             ArrayList<String> rs = partialResults != null ? partialResults.getStringArrayList(
                     SpeechRecognizer.RESULTS_RECOGNITION) : null;
             if (rs != null && rs.size() > 0) {
