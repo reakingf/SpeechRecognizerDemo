@@ -1,0 +1,2 @@
+# SpeechRecognizerDemo
+该语音识别demo使用Android提供的SpeechRecognizer接口和百度提供的VoiceRecognitionService来实现语音识别功能，由于用到百度的语音服务，故需要先注册一个百度开发者账号，将自己的APP_ID, API_KEY和SECRET_KEY放到AndroidManifest.xml中注册，同时还需要用到百度的几个sdk包：VoiceRecognition-2.0.1.jar，libBDVoiceRecognitionClient_MFE_V1.so，libbdEASRAndroid.so。
