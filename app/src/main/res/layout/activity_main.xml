@@ -20,25 +20,25 @@
         android:gravity="center">
         <Button
             android:id="@+id/setting"
-            android:layout_width="120dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="30dp"
             android:background="@drawable/bg_button"
             android:text="@string/change_language"
-            android:textSize="16sp"/>
+            android:textSize="24sp"/>
         <Button
             android:id="@+id/start"
-            android:layout_width="120dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_button"
             android:text="@string/start"
-            android:textSize="16sp"/>
+            android:textSize="24sp"/>
     </LinearLayout>
 
     <ListView
         android:id="@+id/results"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_above="@id/buttonGroup"
         android:divider="@null"
         android:background="@drawable/bg_listview"/>
